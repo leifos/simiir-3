@@ -2,46 +2,27 @@ __author__ = 'leifos'
 import math
 from simiir.text_classifiers.base_classifier import BaseTextClassifier
 from simiir.utils.tidy import clean_html
+from simiir.utils.decorators import retry
 import logging
 from langchain_core.prompts import PromptTemplate
-
 from langchain.output_parsers import ResponseSchema
 from langchain_community.chat_models import ChatOpenAI
 from langchain_community.chat_models import ChatOllama
 from langchain.output_parsers.openai_functions import JsonOutputFunctionsParser
 from langchain.output_parsers import StructuredOutputParser
 
-
 log = logging.getLogger('llm_classifer.LLMTextClassifier')
-
-import time
-
-def retry(max_retries, wait_time):
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            retries = 0
-            if retries < max_retries:
-                try:
-                    result = func(*args, **kwargs)
-                    return result
-                except Exception as e:
-                    retries += 1
-                    time.sleep(wait_time)
-            else:
-              raise Exception(f"Max retries of function {func} exceeded")
-        return wrapper
-    return decorator
 
 
 class LLMTextClassifier(BaseTextClassifier):
     """
 
     """
-    def __init__(self, topic, search_context, stopword_file=[], background_file=[]):
+    def __init__(self, topic, search_context, llmodel='llama2'):
         """
 
         """
-        super(LLMTextClassifier, self).__init__(topic, search_context, stopword_file, background_file)
+        super(LLMTextClassifier, self).__init__(topic, search_context)
         self.updating = False
 
         self._template = """ 
@@ -56,7 +37,7 @@ class LLMTextClassifier(BaseTextClassifier):
         """
         self._topic_schema = ResponseSchema(
             name="topic",
-            description="Is the document about the topic? \
+            description="Is the document about the subject matter in the topic description? \
                 Answer True if about the topic in the description, else False"
             )
        
@@ -73,11 +54,11 @@ class LLMTextClassifier(BaseTextClassifier):
                 Answer True if relevant, False if not relevant or unknown."
             )
         
-        #self._llm = ChatOllama(model="llama2:70b")
-        self._llm = ChatOllama(model="mistral")
+        if llmodel.lower() == 'openai':
+            self._llm = ChatOpenAI(temperature=0.0)
+        else:
+            self._llm = ChatOllama(model=llmodel)
         
-        #self._llm = ChatOpenAI(temperature=0.0)
-
         self._output_parser = StructuredOutputParser.from_response_schemas([ self._topic_schema, self._explanation_schema , self._recommendation_schema ])
 
         format_instructions = self._output_parser.get_format_instructions()
@@ -87,8 +68,6 @@ class LLMTextClassifier(BaseTextClassifier):
             template=self._template,
             input_variables=["topic_title", "topic_description", "doc_title", "doc_content"],
             partial_variables={"format_instructions": format_instructions})
-
-    
 
 
     def update_model(self, search_context):

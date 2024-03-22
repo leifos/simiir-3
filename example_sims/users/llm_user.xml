@@ -18,8 +18,7 @@
 		</snippetClassifier>
 
 		<documentClassifier class="LLMTextClassifier">
-            <attribute name="stopword_file" type="string" value="../example_data/terms/stopwords.txt" is_argument="true" />
-            <attribute name="background_file" type="string" value="../example_data/terms/vocab.txt" is_argument="true" />
+			<attribute name="llmodel" type="string" value="llama2" is_argument="true" />
             <attribute name="updating" type="boolean" value="false" is_argument="false" />
 		</documentClassifier>
 	</textClassifiers>
