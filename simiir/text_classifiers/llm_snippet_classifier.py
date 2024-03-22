@@ -6,10 +6,12 @@ from simiir.utils.decorators import retry
 import logging
 from langchain_core.prompts import PromptTemplate
 from langchain.output_parsers import ResponseSchema
-from langchain_community.chat_models import ChatOpenAI
+#from langchain_community.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain_community.chat_models import ChatOllama
 from langchain.output_parsers.openai_functions import JsonOutputFunctionsParser
 from langchain.output_parsers import StructuredOutputParser
+
 
 log = logging.getLogger('llm_classifer.LLMSnippetTextClassifier')
 
@@ -97,7 +99,6 @@ class LLMSnippetTextClassifier(BaseTextClassifier):
         return False
 
 
-
     @retry(max_retries=5, wait_time=1)
     def is_relevant(self, document):
         """
@@ -112,13 +113,13 @@ class LLMSnippetTextClassifier(BaseTextClassifier):
         ###
         chain = self._prompt | self._llm | self._output_parser
 
+        #print('About to invoke the chain')
         out = chain.invoke({ 'topic_title':topic_title, 'topic_description': topic_description, 'doc_title':doc_title, 'doc_content': doc_content })        
         
-        print(out)
-        #print(type(out))
-
+        log.debug(out)
+        print(f'snippet: {out}')
         rel = out.get('click', False)
-        print(rel)
+
         return rel
     
 

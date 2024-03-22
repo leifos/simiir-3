@@ -6,7 +6,8 @@ from simiir.utils.decorators import retry
 import logging
 from langchain_core.prompts import PromptTemplate
 from langchain.output_parsers import ResponseSchema
-from langchain_community.chat_models import ChatOpenAI
+#from langchain_community.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain_community.chat_models import ChatOllama
 from langchain.output_parsers.openai_functions import JsonOutputFunctionsParser
 from langchain.output_parsers import StructuredOutputParser
@@ -45,8 +46,8 @@ class LLMTextClassifier(BaseTextClassifier):
 
         self._explanation_schema = ResponseSchema(
             name="explain",
-            description="Explain which criteria in the topic description are met by the document. \
-                Provide a series of bullet points for each criteria met or unmet."
+            description="Summarize the relevant information contained in \
+              the document that meets the criteria in the topic description."
             )
        
         self._recommendation_schema = ResponseSchema(
@@ -102,7 +103,6 @@ class LLMTextClassifier(BaseTextClassifier):
         return False
 
 
-
     @retry(max_retries=5, wait_time=1)
     def is_relevant(self, document):
         """
@@ -113,7 +113,7 @@ class LLMTextClassifier(BaseTextClassifier):
         topic_title = self._topic.title
         topic_description  = self._topic.content
 
-        #print(self._prompt.format(topic_title=topic_title, topic_description=topic_description, doc_title=doc_title, doc_content=doc_content))
+        log.debug(self._prompt.format(topic_title=topic_title, topic_description=topic_description, doc_title=doc_title, doc_content=doc_content))
         ###
         chain = self._prompt | self._llm | self._output_parser
 
@@ -121,11 +121,16 @@ class LLMTextClassifier(BaseTextClassifier):
         
         #print(doc_title)
         #print(doc_content)
+        log.debug(out)
         print(out)
         #print(type(out))
 
         rel = out.get('relevant', False)
-        print(rel)
+        #print(rel)
+
+        if rel:
+            self._search_context.relevant_information_found.append(out.get('explain',''))
+
         return rel
     
 
