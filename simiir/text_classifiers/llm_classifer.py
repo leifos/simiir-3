@@ -37,6 +37,7 @@ class LLMTextClassifier(BaseTextClassifier):
         """
         self._topic_schema = ResponseSchema(
             name="topic",
+            type='bool',
             description="Is the document about the subject matter in the topic description? \
                 Answer True if about the topic in the description, else False"
             )
@@ -50,6 +51,7 @@ class LLMTextClassifier(BaseTextClassifier):
        
         self._recommendation_schema = ResponseSchema(
             name="relevant",
+            type='bool',
             description="Is the document relevant to the topic description? \
                 Answer True if relevant, False if not relevant or unknown."
             )
