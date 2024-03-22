@@ -10,12 +10,12 @@ import string
 
 from langchain_core.prompts import PromptTemplate
 from langchain.output_parsers import ResponseSchema
-from langchain_community.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain_community.chat_models import ChatOllama
 from langchain.output_parsers.openai_functions import JsonOutputFunctionsParser
 from langchain.output_parsers import StructuredOutputParser
 
-from tenacity import retry,wait_exponential
+from tenacity import retry,wait_exponential,stop_after_attempt
 
 
 
@@ -51,14 +51,13 @@ class SimpleLLMGenerator(BaseQueryGenerator):
         self._output_parser = StructuredOutputParser.from_response_schemas([ self._query_schema])
 
         format_instructions = self._output_parser.get_format_instructions()
-        print(format_instructions)
      
         self._prompt = PromptTemplate(
             template=self._template,
             input_variables=["topic_title", "topic_description"],
             partial_variables={"format_instructions": format_instructions})
 
-    #@retry(wait=wait_exponential(multiplier=1,min=1,max=30))
+    @retry(wait=wait_exponential(multiplier=1,min=1,max=5),stop=stop_after_attempt(10))
     def generate_query_list(self, search_context):
         """
         Given a Topic object, produces a list of query terms that could be issued by the simulated agent.

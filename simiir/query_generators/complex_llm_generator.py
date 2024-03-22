@@ -17,15 +17,17 @@ from langchain.output_parsers import StructuredOutputParser
 
 from tenacity import retry,wait_exponential,stop_after_attempt
 
+import langchain 
+langchain.debug = True
 
 
-class DynamicLLMGenerator(BaseQueryGenerator):
+class ComplexLLMGenerator(BaseQueryGenerator):
     """
     Takes the SmarterQueryGenerator, and interleaves it with guaranteed dud queries (e.g. [dud, smarter, dud, smarter...])
     Dud queries are generated as random strings, consisting of letters and numbers.
     """
     def __init__(self, stopword_file, background_file=[]):
-        super(DynamicLLMGenerator, self).__init__(stopword_file, background_file=background_file, allow_similar=True)
+        super(ComplexLLMGenerator, self).__init__(stopword_file, background_file=background_file, allow_similar=True)
         self.__smarter = SmarterQueryGenerator(stopword_file, background_file)
         self._template = """ 
         You are a journalist assessing the relevance of news articles for the following topic and need to generate 
@@ -35,8 +37,10 @@ class DynamicLLMGenerator(BaseQueryGenerator):
         Topic Title: "{topic_title}"
         Topic Description: "{topic_description}"
        
-        You have previously used the following queries {old_queries} and found {num_rel} relevant documents.
-        You wish to attempt to find additional relevant documents.
+        You have previously used the following queries {old_queries} and found the following document snippets to be relevant to the topic.
+
+        {snippets}
+
         {format_instructions}
         """
         self._query_schema = ResponseSchema(
@@ -48,7 +52,7 @@ class DynamicLLMGenerator(BaseQueryGenerator):
         #self._llm = ChatOllama(model="llama2:70b")
         #self._llm = ChatOllama(model="mistral")
         
-        self._llm = ChatOpenAI(temperature=0.0)
+        self._llm = ChatOpenAI(temperature=0.0,verbose=True)
 
         self._output_parser = StructuredOutputParser.from_response_schemas([ self._query_schema])
 
@@ -57,7 +61,7 @@ class DynamicLLMGenerator(BaseQueryGenerator):
      
         self._prompt = PromptTemplate(
             template=self._template,
-            input_variables=["topic_title", "topic_description","old_queries","num_rel"],
+            input_variables=["topic_title", "topic_description","old_queries","snippets"],
             partial_variables={"format_instructions": format_instructions})
 
     
@@ -74,8 +78,16 @@ class DynamicLLMGenerator(BaseQueryGenerator):
         description = search_context.topic.content
         old_queries = [str(q.terms) for q in search_context._issued_queries]
         num_rel = len(search_context._relevant_documents)
+        
+        document_list = search_context.get_all_examined_snippets()
+
+        # iterate through document_list, pull out relevant snippets / text
+        rel_text_list = []
+        for doc in document_list:
+            if doc.judgment > 0:
+                rel_text_list.append('Snippet Title: {0}\nSnippet Content: {1}\n'.format(doc.title, doc.content))
 
         chain = self._prompt | self._llm | self._output_parser
-        out = chain.invoke({ 'topic_title':topic, 'topic_description': description, 'old_queries':old_queries, 'num_rel':num_rel})        
+        out = chain.invoke({ 'topic_title':topic, 'topic_description': description, 'old_queries':old_queries, 'snippets':'\n'.join(rel_text_list)})        
         query = out.get('query',"UNABLE TO GENERATE QUERY")
         return str(query)
