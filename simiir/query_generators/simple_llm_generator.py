@@ -39,7 +39,7 @@ class SimpleLLMGenerator(BaseQueryGenerator):
         """
         self._query_schema = ResponseSchema(
             name="queries",
-            description="Generate an array of 30 possible queries for the topic of less than or equal to 3 search terms.",
+            description="Generate an array of 30 possible queries for the topic of less than or equal to 3 search terms ordered by likelihood of success.",
             type="array"
             )
         

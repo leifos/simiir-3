@@ -134,10 +134,10 @@ class BaseQueryGenerator(object):
         :param query_candidate: string of query terms
         """
         query_candidate_object = Query(query_candidate)  # Strip punctutation, etc - so we compare like-for-like!
-        query_candidate_processed = query_candidate_object.terms
+        query_candidate_processed = str(query_candidate_object.terms)
         
         for query in issued_query_list:
-            query_str = query.terms
+            query_str = str(query.terms)
 
             if query_candidate_processed == query_str:
                 return True
