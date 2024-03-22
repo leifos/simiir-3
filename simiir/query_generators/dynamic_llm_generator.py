@@ -28,13 +28,15 @@ class DynamicLLMGenerator(BaseQueryGenerator):
         super(DynamicLLMGenerator, self).__init__(stopword_file, background_file=background_file, allow_similar=True)
         self.__smarter = SmarterQueryGenerator(stopword_file, background_file)
         self._template = """ 
-        You are a journalist assessing the relevance of news articles for the following topic and need to generate 
+        You are a journalist assessing the relevance of news articles for the following topic (denoted by ```) and need to generate 
         search queries to find as much relevant material as quickly as possible.
 
         Queries should be as diverse as possible and avoid repetition.
+        ```
         Topic Title: "{topic_title}"
         Topic Description: "{topic_description}"
-       
+        ```
+        
         You have previously used the following queries {old_queries} and found {num_rel} relevant documents.
         You wish to attempt to find additional relevant documents.
         {format_instructions}
