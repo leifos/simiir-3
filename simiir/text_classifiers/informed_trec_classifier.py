@@ -25,6 +25,7 @@ class InformedTrecTextClassifier(BaseInformedTrecTextClassifier):
         No dice rolling here. Whatever is in the judgement file is used.
         """
         val = self._get_judgment(self._topic.id, document.doc_id)
+        #print(self._topic.id, document.doc_id, val)
         
         if val > 0:
             return True

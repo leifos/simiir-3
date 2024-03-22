@@ -21,7 +21,7 @@ class TrecQrelHandler(TopicDocumentFileHandler):
         topic = parts[0]
         parts = parts[2].partition(' ')
         parts = parts[2].partition(' ')
-        doc = parts[0]
+        doc = str(parts[0].strip())
         judgement = '0' + parts[2].strip()
         if topic and doc:
             self.data[topic][doc] =  int(judgement)

@@ -62,8 +62,9 @@ class WhooshSearchInterface(BaseSearchInterface):
         
         document = Document(id=document_id, title=title, content=content)
         document.date = document_date
-        document.doc_id = document_num
+        document.doc_id = str(document_num)
         document.source = document_source
+        #print(f'get_document(): {document.doc_id=} {type(document.doc_id)}')
         
         return document
         

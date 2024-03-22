@@ -49,7 +49,7 @@ class Response(object):
         self.results.append(result_object)
         self.result_total += 1
 
-    def add_result(self, title="", url="", summary="", imageurl='', rank=-1, **kwargs):
+    def add_result(self, title="", url="", summary="", imageurl='', rank=-1, docid="", **kwargs):
         """
         Adds a result to Response's results list.
 
@@ -59,6 +59,7 @@ class Response(object):
             summary (str): summary of search result
             imageurl (str): the url of an image from the search result
             rank (int): the rank of the result
+            docid(str): doc id
             **kwargs: further optional result attributes
 
         Usage:
@@ -66,7 +67,7 @@ class Response(object):
             summary="a very nice place", imageurl="http://stuff.com/img" rank=2)
 
         """
-        self.results.append(Result(title, url, summary, imageurl , rank, **kwargs))
+        self.results.append(Result(title, url, summary, imageurl , rank, docid, **kwargs))
         self.result_total += 1
 
     def to_json(self):
@@ -169,7 +170,7 @@ class Result(object):
     Models a Result object for use with ifind's Response class.
 
     """
-    def __init__(self, title='', url='', summary='', imageurl='', rank=0, **kwargs):
+    def __init__(self, title='', url='', summary='', imageurl='', rank=0, docid='', **kwargs):
         """
         Result constructor.
 
@@ -190,6 +191,7 @@ class Result(object):
         self.summary = summary
         self.rank = rank
         self.imageurl = imageurl
+        self.docid = docid
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -197,8 +199,8 @@ class Result(object):
         for key, value in self.__dict__.items():
             self.__dict__[key] = value
 
-            if isinstance(value, str):
-                self.__dict__[key] = value.encode('utf-8').rstrip()
+            #if isinstance(value, str):
+            #    self.__dict__[key] = value.encode('utf-8').rstrip()
 
     def __str__(self):
         """
@@ -213,8 +215,8 @@ class Result(object):
         """
         result = "\n"
         for key, value in self.__dict__.items():
-            if isinstance(value, str):
-                value = value.encode('ascii','ignore')
+        #    if isinstance(value, str):
+        #        value = value.encode('ascii','ignore')
 
             result = result + "{0}: {1}\n".format(key, value)
         return result

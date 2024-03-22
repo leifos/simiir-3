@@ -86,7 +86,7 @@ class SearchContext(object):
 
         self.query_limit = 0                     # 0 - no limit on the number issued. Otherwise, the number of queries is capped
         self.relevance_revision = 0              # 0 - no revising of relevance judgements, 1- updates the relevance judgement of snippets
-        
+        self.relevant_information_found = []
     
     @property
     def relevance_revision(self):
@@ -202,6 +202,7 @@ class SearchContext(object):
         # Pull out the next result, and construct a Document object representing the snippet. Set the current snippet to that Document.
         result = self._last_results[self._current_serp_position]
         snippet = Document(result.whooshid, result.title, result.summary, result.docid)
+        #print(f'_set_snippet_action(): {result.docid=}')
 
         self._snippets_examined.append(snippet)
         self._all_snippets_examined.append(snippet)

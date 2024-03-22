@@ -232,11 +232,7 @@ class Whooshtrec(Engine):
         response = Response(query.terms)
         r = 0
 
-
-
-
         search_page.results.fragmenter = fragmenter
-
 
         for result in search_page:
             title = result["title"]
@@ -255,8 +251,8 @@ class Whooshtrec(Engine):
             summary = result.highlights(field,top=snippet_size)
             content = result[field]
 
-            trecid = result["docid"]
-            trecid = trecid.strip()
+            trecid = str(result["docid"].strip())
+           
 
             source = result["source"]
 
@@ -277,5 +273,10 @@ class Whooshtrec(Engine):
         setattr(response, 'total_pages', search_page.pagecount)
         setattr(response, 'results_on_page', search_page.pagelen)
         setattr(response, 'actual_page', search_page.actual_page)
+
+        #for res in response.results:
+        #    print(f'{res.docid}, {res.source}')
+        #    print(res)
+
         return response
 
