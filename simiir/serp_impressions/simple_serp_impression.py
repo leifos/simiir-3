@@ -23,6 +23,7 @@ class SimpleSERPImpression(BaseSERPImpression):
         """
         patch_judgements = self._get_patch_judgements()  # We don't have a means of working out judgements for
                                                           # determining patch type, so fall back to TREC judgements.
+        self.summed_judgements = self._get_scores(patch_judgements)
         patch_type = self._calculate_patch_type(patch_judgements)
         self._set_query_patch_type(patch_type)
         

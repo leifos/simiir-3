@@ -63,7 +63,7 @@ class Whooshtrec(Engine):
 
             log.debug("Whoosh Document index open: {0}".format(whoosh_index_dir))
             log.debug("Documents in index: {0}".format( self.docIndex.doc_count()))
-
+            log.debug(self.docIndex.schema)
 
             self._field = 'content'
             if 'alltext' in self.docIndex.schema:
@@ -235,24 +235,25 @@ class Whooshtrec(Engine):
         search_page.results.fragmenter = fragmenter
 
         for result in search_page:
-            title = result["title"]
-            if title:
-                title = title.strip()
-            else:
-                title = "Untitled"
-
+            title = 'Untitled'
+            if 'title' in result:
+                title = result["title"].strip()
             if title == '':
-                title = "Untitled"
+                title = 'Untitled'
 
             rank = result.rank + 1
 
             url = "/treconomics/" + str(result.docnum)
 
             summary = result.highlights(field,top=snippet_size)
+            if 'lead_sentence' in result:
+                if result['lead_sentence']:
+                    summary = result['lead_sentence']
+
             content = result[field]
 
             trecid = str(result["docid"].strip())
-           
+            imageurl = ''
 
             source = result["source"]
 

@@ -30,6 +30,7 @@ class PerfectSERPImpression(BaseSERPImpression):
         judgements = self._get_patch_judgements()
         patch_type = self._calculate_patch_type(judgements)
         self._set_query_patch_type(patch_type)
+        self.summed_judgements = self.__get_scores(judgements)
         
         results_len = self._search_context.get_current_results_length()
         results_list = self._search_context.get_current_results()

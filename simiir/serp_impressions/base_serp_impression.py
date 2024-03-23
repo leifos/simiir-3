@@ -18,11 +18,12 @@ class BaseSERPImpression(object):
         self.patch_type_threshold = 0.6
         self.viewport_size = 10
         self.novel_snippets_only = False
+        self.summed_judgements = 0
         
         self._qrel_data_handler = get_data_handler(filename=qrel_file, host=host, port=port, key_prefix='serpimpressions')
     
     
-    def __get_scores(self, judgements):
+    def _get_scores(self, judgements):
         """
         Calculates the score for a given set of judgements.
         """
@@ -51,9 +52,9 @@ class BaseSERPImpression(object):
             max_size = len(snippet_judgements)
         
         perfect_judgements = [1] * max_size
-        perfect_score = self.__get_scores(perfect_judgements)
+        perfect_score = self._get_scores(perfect_judgements)
         
-        judgements_score = self.__get_scores(snippet_judgements)
+        judgements_score = self._get_scores(snippet_judgements)
         normalised_score = float(judgements_score) / perfect_score
         
         if normalised_score >= self.patch_type_threshold:

@@ -53,11 +53,19 @@ class WhooshSearchInterface(BaseSearchInterface):
         Retrieves a Document object for the given document specified by parameter document_id.
         """
         fields = self.__reader.stored_fields(int(document_id))
-        
-        title = fields['title']
-        content = fields['content']
+        if 'title' in fields:
+            title = fields['title']
+        else:
+            title = 'Untitled'
+        if 'content' in fields:
+            content = fields['content']
+        else:
+            content = fields['alltext']
         document_num = fields['docid']
-        document_date = fields['timedate']
+        if 'timedate' in fields:
+            document_date = fields['timedate']
+        else:
+            document_date = fields['published_date']
         document_source = fields['source']
         
         document = Document(id=document_id, title=title, content=content)

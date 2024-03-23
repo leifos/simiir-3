@@ -39,6 +39,7 @@ class StochasticSERPImpression(BaseSERPImpression):
         # Work out the patch type first, using code from the base (SimpleSERPImpression) class.
         judgements = self._get_patch_judgements()
         patch_type = self._calculate_patch_type(judgements)
+        self.summed_judgements = self.__get_scores(judgements)
         self._set_query_patch_type(patch_type)
         
         # Now work out whether we enter the SERP or not.

@@ -133,7 +133,7 @@ class SimulatedUser(object):
 
         # Get a query from the generator.
         query_text = self.__query_generator.get_next_query(self.__search_context)
-        
+        print(f'Query: {query_text}')        
         if query_text:
             self.__search_context.add_issued_query(query_text)  # Can also supply page number and page lengths here.
             self.__logger.log_action(Actions.QUERY, query=query_text)
@@ -158,6 +158,7 @@ class SimulatedUser(object):
         # Code updates on 2017-09-28 for refactoring.
         # Simplified this portion -- the SERP impression component now only returns a True/False value.
         is_serp_attractive = self.__serp_impression.is_serp_attractive()
+        print(f'Patch Attractive: {is_serp_attractive} judgements:{self.__serp_impression.summed_judgements}')
         self.__search_context.add_serp_impression(is_serp_attractive)  # Update the search context.
         
         if is_serp_attractive:
