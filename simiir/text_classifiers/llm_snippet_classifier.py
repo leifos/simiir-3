@@ -32,9 +32,13 @@ class LLMSnippetTextClassifier(BaseTextClassifier):
         results that might be relevant to the following topic.
         Topic Description: "{topic_description}"
        
-        Result Title: "{doc_title}"
-        Result Snippet: "{doc_content}"
-        
+        —BEGIN RESULT SUMMARY—
+        Result Title: 
+        {doc_title}
+        Result Snippet: 
+         {doc_content}
+        —END RESULT SUMMARY—
+
         Judge whether this result is likely to contain relevant information.
         {format_instructions}
         """
@@ -44,7 +48,6 @@ class LLMSnippetTextClassifier(BaseTextClassifier):
             description="Is the result about the subject matter in the topic description? \
                 Answer True if about the topic in the description, else False"
             )
-       
        
         self._recommendation_schema = ResponseSchema(
             name="click",
@@ -61,8 +64,7 @@ class LLMSnippetTextClassifier(BaseTextClassifier):
         self._output_parser = StructuredOutputParser.from_response_schemas([ self._topic_schema, self._recommendation_schema ])
 
         format_instructions = self._output_parser.get_format_instructions()
-        print(format_instructions)
-     
+        
         self._prompt = PromptTemplate(
             template=self._template,
             input_variables=["topic_title", "topic_description", "doc_title", "doc_content"],
@@ -117,7 +119,8 @@ class LLMSnippetTextClassifier(BaseTextClassifier):
         out = chain.invoke({ 'topic_title':topic_title, 'topic_description': topic_description, 'doc_title':doc_title, 'doc_content': doc_content })        
         
         log.debug(out)
-        print(f'snippet: {out}')
+        print(f'Snippet: {doc_title}\n{doc_content}'.strip())
+        print(f'Snippet Decision: {out}')
         rel = out.get('click', False)
 
         return rel

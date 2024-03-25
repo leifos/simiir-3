@@ -30,8 +30,10 @@ class LLMTextClassifier(BaseTextClassifier):
         You are a journalist assessing the relevance of news articles for the following topic.
         Topic Description: "{topic_description}"
        
+        —BEGIN DOC CONTENT—
         Document Title: "{doc_title}"
         Document Contents: "{doc_content}"
+        -END DOC CONTENT—
         
         Judge whether the document is relevant given the topic desciption.
         {format_instructions}
@@ -43,11 +45,10 @@ class LLMTextClassifier(BaseTextClassifier):
                 Answer True if about the topic in the description, else False"
             )
        
-
         self._explanation_schema = ResponseSchema(
             name="explain",
-            description="Summarize the relevant information contained in \
-              the document that meets the criteria in the topic description."
+            description="Summarize the information from the document that is relevant to the \
+            topic description and the criteria. Be short, specific, and succint and mention all relevant entities."
             )
        
         self._recommendation_schema = ResponseSchema(
