@@ -23,10 +23,10 @@ Date:   2015-09-09
 	
 	<users>
       <user configurationFile="../example_sims/users/wapo_trec_user.xml" /> 
-        <user configurationFile="../example_sims/users/perfect_wapo_user.xml" />
-        <user configurationFile="../example_sims/users/smart_user.xml" />
+       <user configurationFile="../example_sims/users/wapo_perfect_user.xml" />
+        <user configurationFile="../example_sims/users/wapo_smart_user.xml" />
 		<user configurationFile="../example_sims/users/wapo_llm_user.xml" />
-       <!-- <user configurationFile="../example_sims/users/lm_smart_user_with_updating.xml" />
+     <!--   <user configurationFile="../example_sims/users/lm_smart_user_with_updating.xml" />
 		<user configurationFile="../example_sims/users/lm_smart_user_with_background_updating.xml" />
         <user configurationFile="../example_sims/users/fixed_depth_user.xml" />
         <user configurationFile="../example_sims/users/random_user.xml" />

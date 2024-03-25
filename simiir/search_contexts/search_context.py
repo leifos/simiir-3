@@ -125,7 +125,7 @@ class SearchContext(object):
         return_string = return_string + "    Number of Documents Examined: {0}{1}".format(len(self._all_documents_examined), os.linesep)
         return_string = return_string + "    Number of Documents Marked Relevant: {0}{1}".format(len(self._relevant_documents), os.linesep)
         return_string = return_string + "    Number of Attractive SERPs Examined: {0}{1}".format(self._attractive_serp_count, os.linesep)
-        return_string = return_string + "    Number of Unattractive SERPs Examined: {0}".format(self._unattractive_serp_count)
+        return_string = return_string + "    Number of Unattractive SERPs Examined: {0}{1}".format(self._unattractive_serp_count, os.linesep)
         
         self._output_controller.log_info(info_type="SUMMARY")
         self._output_controller.log_info(info_type="TOTAL_QUERIES_ISSUED", text=len(self._issued_queries))

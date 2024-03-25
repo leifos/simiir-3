@@ -22,9 +22,9 @@ Date:   2015-09-09
  	</topics>
 	
 	<users>
-        <user configurationFile="../example_sims/users/trec_user.xml" />
+      <!--  <user configurationFile="../example_sims/users/trec_user.xml" /> -->
         <user configurationFile="../example_sims/users/perfect_trec_user.xml" />
-        <user configurationFile="../example_sims/users/smart_user.xml" />
+      <!--  <user configurationFile="../example_sims/users/smart_user.xml" />
         <user configurationFile="../example_sims/users/lm_smart_user_with_updating.xml" />
 		<user configurationFile="../example_sims/users/lm_smart_user_with_background_updating.xml" />
         <user configurationFile="../example_sims/users/fixed_depth_user.xml" />
@@ -34,6 +34,8 @@ Date:   2015-09-09
 		<user configurationFile="../example_sims/users/bi_term_query_user.xml" />
 		<user configurationFile="../example_sims/users/tri_term_query_user.xml" />
 		<user configurationFile="../example_sims/users/additional_term_query_user.xml" />
+
+		-->
 	</users>
 	
 	<searchInterface class="WhooshSearchInterface">

@@ -35,9 +35,11 @@
 		<attribute name="mark_document_cost" type="integer" value="3" is_argument="true" />
 	</logger>
 	
-	<searchContext class="SearchContext">
+	<searchContext class="TRECSearchContext">
 		<attribute name="relevance_revision" type="integer" value="1" is_argument="false" />
+		<attribute name="qrel_file" type="string" value="../example_data/qrels/wapo2018.qrels" is_argument="true" />
 	</searchContext>
+	
 	
 		<serpImpression class="SimpleSERPImpression">
 		<attribute name="qrel_file" type="string" value="../example_data/qrels/wapo2018.qrels" is_argument="true" />
