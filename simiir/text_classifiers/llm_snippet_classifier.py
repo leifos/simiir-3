@@ -9,8 +9,8 @@ from langchain.output_parsers import ResponseSchema
 #from langchain_community.chat_models import ChatOpenAI
 from langchain_openai import ChatOpenAI
 from langchain_community.chat_models import ChatOllama
-from langchain.output_parsers.openai_functions import JsonOutputFunctionsParser
-from langchain.output_parsers import StructuredOutputParser
+from langchain_core.output_parsers import JsonOutputParser
+
 
 
 log = logging.getLogger('llm_classifer.LLMSnippetTextClassifier')
@@ -62,7 +62,7 @@ class LLMSnippetTextClassifier(BaseTextClassifier):
         else:
             self._llm = ChatOllama(model=llmodel)
         
-        self._output_parser = StructuredOutputParser.from_response_schemas([ self._topic_schema, self._recommendation_schema ])
+        self._output_parser = JsonOutputParser(pydantic=[ self._topic_schema, self._recommendation_schema ])
 
         format_instructions = self._output_parser.get_format_instructions()
         
