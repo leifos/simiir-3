@@ -15,7 +15,7 @@ from langchain.output_parsers import StructuredOutputParser
 
 log = logging.getLogger('llm_classifer.LLMSnippetTextClassifier')
 
-
+from tenacity import retry,wait_exponential,stop_after_attempt
 class LLMSnippetTextClassifier(BaseTextClassifier):
     """
 
@@ -102,7 +102,7 @@ class LLMSnippetTextClassifier(BaseTextClassifier):
         return False
 
 
-    @retry(max_retries=5, wait_time=2)
+    @retry(wait=wait_exponential(multiplier=1,min=1,max=5),stop=stop_after_attempt(10))
     def is_relevant(self, document):
         """
 
