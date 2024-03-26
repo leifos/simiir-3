@@ -56,6 +56,7 @@ class LLMSnippetTextClassifier(BaseTextClassifier):
                 Answer True if it is worth clicking, else False."
             )
         
+        print(f'Using {llmodel.lower()}')
         if llmodel.lower() == 'openai':
             self._llm = ChatOpenAI(temperature=0.0)
         else:
@@ -101,11 +102,12 @@ class LLMSnippetTextClassifier(BaseTextClassifier):
         return False
 
 
-    @retry(max_retries=5, wait_time=1)
+    @retry(max_retries=5, wait_time=2)
     def is_relevant(self, document):
         """
 
-        """        
+        """
+        print("in snippet llm classifier")
         doc_title = " ".join(clean_html(document.title))
         doc_content = " ".join(clean_html(document.content))
         topic_title = self._topic.title
@@ -116,7 +118,7 @@ class LLMSnippetTextClassifier(BaseTextClassifier):
         chain = self._prompt | self._llm | self._output_parser
 
         #print('About to invoke the chain')
-        out = chain.invoke({ 'topic_title':topic_title, 'topic_description': topic_description, 'doc_title':doc_title, 'doc_content': doc_content })        
+        out = chain.invoke({ 'topic_title': topic_title, 'topic_description': topic_description, 'doc_title': doc_title, 'doc_content': doc_content })        
         
         log.debug(out)
         print(f'Snippet: {doc_title}\n{doc_content}'.strip())

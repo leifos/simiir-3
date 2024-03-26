@@ -66,7 +66,7 @@ class LLMTextClassifier(BaseTextClassifier):
         self._output_parser = StructuredOutputParser.from_response_schemas([ self._topic_schema, self._explanation_schema , self._recommendation_schema ])
 
         format_instructions = self._output_parser.get_format_instructions()
-        print(format_instructions)
+        #print(format_instructions)
      
         self._prompt = PromptTemplate(
             template=self._template,

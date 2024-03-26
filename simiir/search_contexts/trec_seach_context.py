@@ -40,7 +40,9 @@ class TRECSearchContext(SearchContext):
     def report(self):
         self._assess_documents()
         report_string = super(TRECSearchContext, self).report()
-        user_precision = round(self._num_trec_rels / len(self._relevant_documents),4)
+        user_precision = 0.0
+        if len(self._relevant_documents) > 0:
+            user_precision = round(self._num_trec_rels / len(self._relevant_documents),4)
         report_string = report_string + "    Number of TREC Relevant Docs: {0}{1}".format(self._num_trec_rels, os.linesep)
         report_string = report_string + "    Number of Unique TREC Relevant Docs: {0}{1}".format(self._uniq_num_trec_rels, os.linesep)
         report_string = report_string + "    Precision of Marked Docs: {0}{1}".format(user_precision, os.linesep)
