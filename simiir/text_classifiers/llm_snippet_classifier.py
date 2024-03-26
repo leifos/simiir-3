@@ -10,7 +10,7 @@ from langchain.output_parsers import ResponseSchema
 from langchain_openai import ChatOpenAI
 from langchain_community.chat_models import ChatOllama
 from langchain_core.output_parsers import JsonOutputParser
-
+from langchain_core.pydantic_v1 import BaseModel, Field
 
 
 log = logging.getLogger('llm_classifer.LLMSnippetTextClassifier')
@@ -42,19 +42,22 @@ class LLMSnippetTextClassifier(BaseTextClassifier):
         Judge whether this result is likely to contain relevant information.
         {format_instructions}
         """
-        self._topic_schema = ResponseSchema(
-            name="topic",
-            type='bool',
-            description="Is the result about the subject matter in the topic description? \
-                Answer True if about the topic in the description, else False"
-            )
+        class SnippetResponse(BaseModel):
+            topic: bool = Field("Is the result about the subject matter in the topic description? Answer True if about the topic in the description, else False")
+            click: bool = Field("Is it worth clicking on this result to inspect the document? Answer True if it is worth clicking, else False.")
+            
+        # self._topic_schema = ResponseSchema(
+        #     name="topic",
+        #     type='bool',
+        #     description="Is the result about the subject matter in the topic description? Answer True if about the topic in the description, else False"
+        #     )
        
-        self._recommendation_schema = ResponseSchema(
-            name="click",
-            type='bool',
-            description="Is it worth clicking on this result to inspect the document? \
-                Answer True if it is worth clicking, else False."
-            )
+        # self._recommendation_schema = ResponseSchema(
+        #     name="click",
+        #     type='bool',
+        #     description="Is it worth clicking on this result to inspect the document? \
+        #         Answer True if it is worth clicking, else False."
+        #     )
         
         print(f'Using {llmodel.lower()}')
         if llmodel.lower() == 'openai':
@@ -62,10 +65,9 @@ class LLMSnippetTextClassifier(BaseTextClassifier):
         else:
             self._llm = ChatOllama(model=llmodel)
         
-        self._output_parser = JsonOutputParser(pydantic=[ self._topic_schema, self._recommendation_schema ])
+        self._output_parser = JsonOutputParser(pydantic_object=SnippetResponse)
 
         format_instructions = self._output_parser.get_format_instructions()
-        
         self._prompt = PromptTemplate(
             template=self._template,
             input_variables=["topic_title", "topic_description", "doc_title", "doc_content"],
@@ -123,7 +125,7 @@ class LLMSnippetTextClassifier(BaseTextClassifier):
         log.debug(out)
         print(f'Snippet: {doc_title}\n{doc_content}'.strip())
         print(f'Snippet Decision: {out}')
-        rel = out.get('click', False)
+        rel = out['click']#out.get('click', False)
 
         return rel
     
