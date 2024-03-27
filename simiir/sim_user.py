@@ -18,7 +18,9 @@ class SimulatedUser(object):
         self.__snippet_classifier = configuration.user.snippet_classifier
         self.__query_generator = configuration.user.query_generator
         self.__serp_impression = configuration.user.serp_impression
-        
+        #self.__response_classifer ...
+        #self.__utterance_generator ..
+        #self.__response_stopping_strategy .. 
         self.__action_value = None  # Response from the previous action method - True or False? (did the user do or not do what they thought?)
     
     def decide_action(self):

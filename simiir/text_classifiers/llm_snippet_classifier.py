@@ -7,10 +7,20 @@ import logging
 from langchain_core.prompts import PromptTemplate
 from langchain.output_parsers import ResponseSchema
 #from langchain_community.chat_models import ChatOpenAI
-from langchain_openai import ChatOpenAI
+from langchain_openai import ChatOpenAI, OpenAI
 from langchain_community.chat_models import ChatOllama
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.pydantic_v1 import BaseModel, Field
+#from pydantic import BaseModel, Field, field_validator
+#from pydantic import ValidationError, StrictInt, StrictBool
+
+from langchain_core.runnables import RunnableLambda, RunnableParallel
+from langchain.output_parsers import RetryOutputParser
+from langchain.output_parsers import (
+    OutputFixingParser,
+    PydanticOutputParser,
+    RetryWithErrorOutputParser
+)
 
 
 log = logging.getLogger('llm_classifer.LLMSnippetTextClassifier')
@@ -46,6 +56,16 @@ class LLMSnippetTextClassifier(BaseTextClassifier):
             topic: bool = Field("Is the result about the subject matter in the topic description? Answer True if about the topic in the description, else False")
             click: bool = Field("Is it worth clicking on this result to inspect the document? Answer True if it is worth clicking, else False.")
             
+
+        #   @field_validator('click')
+        #    @classmethod
+        #    def check_click(cls, v):
+        #        if not isinstance(v, bool):
+        #            raise ValueError("Badly formed click not boolean")
+        #        return v
+            
+    
+    
         # self._topic_schema = ResponseSchema(
         #     name="topic",
         #     type='bool',
@@ -66,6 +86,7 @@ class LLMSnippetTextClassifier(BaseTextClassifier):
             self._llm = ChatOllama(model=llmodel)
         
         self._output_parser = JsonOutputParser(pydantic_object=SnippetResponse)
+        #JsonOutputParser(pydantic_object=SnippetResponse)
 
         format_instructions = self._output_parser.get_format_instructions()
         self._prompt = PromptTemplate(
@@ -104,28 +125,31 @@ class LLMSnippetTextClassifier(BaseTextClassifier):
         return False
 
 
-    @retry(wait=wait_exponential(multiplier=1,min=1,max=5),stop=stop_after_attempt(10))
+    #@retry(wait=wait_exponential(multiplier=1,min=1,max=5),stop=stop_after_attempt(10))
     def is_relevant(self, document):
         """
-
         """
-        print("in snippet llm classifier")
+
         doc_title = " ".join(clean_html(document.title))
         doc_content = " ".join(clean_html(document.content))
         topic_title = self._topic.title
         topic_description  = self._topic.content
 
-        log.debug(self._prompt.format(topic_title=topic_title, topic_description=topic_description, doc_title=doc_title, doc_content=doc_content))
-        ###
-        chain = self._prompt | self._llm | self._output_parser
+        log.debug(self._prompt.format(topic_title=topic_title, topic_description=topic_description, doc_title=doc_title, doc_content=doc_content))    
+        #retry_parser = RetryWithErrorOutputParser.from_llm(parser=self._output_parser, llm=self._llm)
 
+        chain = self._prompt | self._llm | self._output_parser
+        #chain = self._prompt | self._llm | retry_parser
+        
+        #main_chain = RunnableParallel( completion=chain, prompt_value=self._prompt) | RunnableLambda(lambda x: retry_parser.parse_with_prompt(**x))
         #print('About to invoke the chain')
         out = chain.invoke({ 'topic_title': topic_title, 'topic_description': topic_description, 'doc_title': doc_title, 'doc_content': doc_content })        
         
-        log.debug(out)
         print(f'Snippet: {doc_title}\n{doc_content}'.strip())
         print(f'Snippet Decision: {out}')
-        rel = out['click']#out.get('click', False)
+        
+
+        rel = out.get('relevant', False)
 
         return rel
     

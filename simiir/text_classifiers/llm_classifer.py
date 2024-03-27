@@ -1,20 +1,20 @@
 __author__ = 'leifos'
 import math
+import logging
 from simiir.text_classifiers.base_classifier import BaseTextClassifier
 from simiir.utils.tidy import clean_html
-from simiir.utils.decorators import retry
-import logging
 from langchain_core.prompts import PromptTemplate
 from langchain.output_parsers import ResponseSchema
 #from langchain_community.chat_models import ChatOpenAI
 from langchain_openai import ChatOpenAI
 from langchain_community.chat_models import ChatOllama
-from langchain.output_parsers.openai_functions import JsonOutputFunctionsParser
 from langchain.output_parsers import StructuredOutputParser
+from langchain_core.output_parsers import JsonOutputParser
+from langchain_core.pydantic_v1 import BaseModel, Field
 
 log = logging.getLogger('llm_classifer.LLMTextClassifier')
 
-
+from tenacity import retry,wait_exponential,stop_after_attempt
 class LLMTextClassifier(BaseTextClassifier):
     """
 
@@ -38,32 +38,41 @@ class LLMTextClassifier(BaseTextClassifier):
         Judge whether the document is relevant given the topic desciption.
         {format_instructions}
         """
-        self._topic_schema = ResponseSchema(
-            name="topic",
-            type='bool',
-            description="Is the document about the subject matter in the topic description? \
-                Answer True if about the topic in the description, else False"
-            )
+
+        class DocumentResponse(BaseModel):
+            topic: bool = Field("Is the document about the subject matter in the topic description? Answer True if about the topic in the description, else False.")
+            explain: str = Field("Summarize the information from the document that is relevant to the topic description and the criteria. Be specific and succint but mention all relevant entities.")
+            relevant: bool = Field("Is the document relevant to the topic description? Answer True if relevant, False if not relevant or unknown.")
+            
+
+        #self._topic_schema = ResponseSchema(
+        #    name="topic",
+        #    type='bool',
+        #    description="Is the document about the subject matter in the topic description? \
+        #        Answer True if about the topic in the description, else False"
+        #    )
        
-        self._explanation_schema = ResponseSchema(
-            name="explain",
-            description="Summarize the information from the document that is relevant to the \
-            topic description and the criteria. Be short, specific, and succint and mention all relevant entities."
-            )
+        #self._explanation_schema = ResponseSchema(
+        #    name="explain",
+        #    description="Summarize the information from the document that is relevant to the \
+        #    topic description and the criteria. Be short, specific, and succint and mention all relevant entities."
+        #    )
        
-        self._recommendation_schema = ResponseSchema(
-            name="relevant",
-            type='bool',
-            description="Is the document relevant to the topic description? \
-                Answer True if relevant, False if not relevant or unknown."
-            )
+        #self._recommendation_schema = ResponseSchema(
+        #    name="relevant",
+        #    type='bool',
+        #    description="Is the document relevant to the topic description? \
+        #        Answer True if relevant, False if not relevant or unknown."
+        #    )
         
         if llmodel.lower() == 'openai':
             self._llm = ChatOpenAI(temperature=0.0)
         else:
             self._llm = ChatOllama(model=llmodel)
+
+        self._output_parser = JsonOutputParser(pydantic_object=DocumentResponse)
         
-        self._output_parser = StructuredOutputParser.from_response_schemas([ self._topic_schema, self._explanation_schema , self._recommendation_schema ])
+        #self._output_parser = StructuredOutputParser.from_response_schemas([ self._topic_schema, self._explanation_schema , self._recommendation_schema ])
 
         format_instructions = self._output_parser.get_format_instructions()
         #print(format_instructions)
@@ -104,7 +113,7 @@ class LLMTextClassifier(BaseTextClassifier):
         return False
 
 
-    @retry(max_retries=5, wait_time=1)
+    @retry(wait=wait_exponential(multiplier=1,min=1,max=5),stop=stop_after_attempt(10))
     def is_relevant(self, document):
         """
 
