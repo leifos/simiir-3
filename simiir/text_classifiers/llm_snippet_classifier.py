@@ -10,8 +10,8 @@ from langchain.output_parsers import ResponseSchema
 from langchain_openai import ChatOpenAI, OpenAI
 from langchain_community.chat_models import ChatOllama
 from langchain_core.output_parsers import JsonOutputParser
-from langchain_core.pydantic_v1 import BaseModel, Field
-#from pydantic import BaseModel, Field, field_validator
+# from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 #from pydantic import ValidationError, StrictInt, StrictBool
 
 from langchain_core.runnables import RunnableLambda, RunnableParallel
@@ -83,9 +83,9 @@ class LLMSnippetTextClassifier(BaseTextClassifier):
         if llmodel.lower() == 'openai':
             self._llm = ChatOpenAI(temperature=0.0)
         else:
-            self._llm = ChatOllama(model=llmodel)
+            self._llm = ChatOllama(model=llmodel,temperature=0.0)
         
-        self._output_parser = JsonOutputParser(pydantic_object=SnippetResponse)
+        self._output_parser = PydanticOutputParser(pydantic_object=SnippetResponse)
         #JsonOutputParser(pydantic_object=SnippetResponse)
 
         format_instructions = self._output_parser.get_format_instructions()
@@ -125,7 +125,7 @@ class LLMSnippetTextClassifier(BaseTextClassifier):
         return False
 
 
-    #@retry(wait=wait_exponential(multiplier=1,min=1,max=5),stop=stop_after_attempt(10))
+    @retry(wait=wait_exponential(multiplier=1,min=1,max=5),stop=stop_after_attempt(10))
     def is_relevant(self, document):
         """
         """
@@ -136,20 +136,29 @@ class LLMSnippetTextClassifier(BaseTextClassifier):
         topic_description  = self._topic.content
 
         log.debug(self._prompt.format(topic_title=topic_title, topic_description=topic_description, doc_title=doc_title, doc_content=doc_content))    
-        #retry_parser = RetryWithErrorOutputParser.from_llm(parser=self._output_parser, llm=self._llm)
+        # retry_parser = RetryWithErrorOutputParser.from_llm(parser=self._output_parser, llm=self._llm,prompt=self._prompt,max_retries=10)
 
         chain = self._prompt | self._llm | self._output_parser
-        #chain = self._prompt | self._llm | retry_parser
         
-        #main_chain = RunnableParallel( completion=chain, prompt_value=self._prompt) | RunnableLambda(lambda x: retry_parser.parse_with_prompt(**x))
+        # main_chain = RunnableParallel( completion=chain, prompt_value=self._prompt) | RunnableLambda(lambda x: retry_parser.parse_with_prompt(**x))
         #print('About to invoke the chain')
         out = chain.invoke({ 'topic_title': topic_title, 'topic_description': topic_description, 'doc_title': doc_title, 'doc_content': doc_content })        
         
         print(f'Snippet: {doc_title}\n{doc_content}'.strip())
         print(f'Snippet Decision: {out}')
         
-
-        rel = out.get('relevant', False)
+        rel = out.click
+        while type(rel) != bool:
+            new_prompt = """You response to the following prompt was incorrect. \n ```{0}``` You responded with {1}. Please try again and respond correctly.""".format(self._prompt.template,out)
+            new_template = PromptTemplate(
+                template=new_prompt,
+                input_variables=["topic_title", "topic_description", "doc_title", "doc_content","response"],
+                partial_variables={"format_instructions": self._output_parser.get_format_instructions()}
+            )
+            chain = new_template | self._llm | self._output_parser
+            out = chain.invoke({ 'topic_title': topic_title, 'topic_description': topic_description, 'doc_title': doc_title, 'doc_content': doc_content})        
+            print(f'Snippet Decision Loop: {out}')
+            rel = out.click
 
         return rel
     
