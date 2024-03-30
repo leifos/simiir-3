@@ -26,6 +26,10 @@ from langchain.output_parsers import (
 log = logging.getLogger('llm_classifer.LLMSnippetTextClassifier')
 
 from tenacity import retry,wait_exponential,stop_after_attempt
+class SnippetResponse(BaseModel):
+    topic: bool = Field("Is the result about the subject matter in the topic description? Answer True if about the topic in the description, else False")
+    click: bool = Field("Is it worth clicking on this result to inspect the document? Answer True if it is worth clicking, else False.")
+
 class LLMSnippetTextClassifier(BaseTextClassifier):
     """
 
@@ -52,9 +56,7 @@ class LLMSnippetTextClassifier(BaseTextClassifier):
         Judge whether this result is likely to contain relevant information.
         {format_instructions}
         """
-        class SnippetResponse(BaseModel):
-            topic: bool = Field("Is the result about the subject matter in the topic description? Answer True if about the topic in the description, else False")
-            click: bool = Field("Is it worth clicking on this result to inspect the document? Answer True if it is worth clicking, else False.")
+
             
 
         #   @field_validator('click')
@@ -125,7 +127,7 @@ class LLMSnippetTextClassifier(BaseTextClassifier):
         return False
 
 
-    @retry(wait=wait_exponential(multiplier=1,min=1,max=5),stop=stop_after_attempt(10))
+    # @retry(wait=wait_exponential(multiplier=1,min=1,max=5),stop=stop_after_attempt(10))
     def is_relevant(self, document):
         """
         """
@@ -138,29 +140,31 @@ class LLMSnippetTextClassifier(BaseTextClassifier):
         log.debug(self._prompt.format(topic_title=topic_title, topic_description=topic_description, doc_title=doc_title, doc_content=doc_content))    
         # retry_parser = RetryWithErrorOutputParser.from_llm(parser=self._output_parser, llm=self._llm,prompt=self._prompt,max_retries=10)
 
-        chain = self._prompt | self._llm | self._output_parser
+        
+        # chain = self._prompt | 
         
         # main_chain = RunnableParallel( completion=chain, prompt_value=self._prompt) | RunnableLambda(lambda x: retry_parser.parse_with_prompt(**x))
         #print('About to invoke the chain')
-        out = chain.invoke({ 'topic_title': topic_title, 'topic_description': topic_description, 'doc_title': doc_title, 'doc_content': doc_content })        
+        # out = chain.invoke({ 'topic_title': topic_title, 'topic_description': topic_description, 'doc_title': doc_title, 'doc_content': doc_content })        
         
         print(f'Snippet: {doc_title}\n{doc_content}'.strip())
-        print(f'Snippet Decision: {out}')
+        out = StructuralRetry(self._prompt,{ 'topic_title': topic_title, 'topic_description': topic_description, 'doc_title': doc_title, 'doc_content': doc_content },self._llm | self._output_parser)
+        # print(f'Snippet Decision: {out}')
         
-        rel = out.click
-        while type(rel) != bool:
-            new_prompt = """You response to the following prompt was incorrect. \n ```{0}``` You responded with {1}. Please try again and respond correctly.""".format(self._prompt.template,out)
-            new_template = PromptTemplate(
-                template=new_prompt,
-                input_variables=["topic_title", "topic_description", "doc_title", "doc_content","response"],
-                partial_variables={"format_instructions": self._output_parser.get_format_instructions()}
-            )
-            chain = new_template | self._llm | self._output_parser
-            out = chain.invoke({ 'topic_title': topic_title, 'topic_description': topic_description, 'doc_title': doc_title, 'doc_content': doc_content})        
-            print(f'Snippet Decision Loop: {out}')
-            rel = out.click
+        # rel = out.click
+        # while type(rel) != bool:
+        #     new_prompt = """You response to the following prompt was incorrect. \n ```{0}``` You responded with {1}. Please try again and respond correctly.""".format(self._prompt.template,out)
+        #     new_template = PromptTemplate(
+        #         template=new_prompt,
+        #         input_variables=["topic_title", "topic_description", "doc_title", "doc_content","response"],
+        #         partial_variables={"format_instructions": self._output_parser.get_format_instructions()}
+        #     )
+        #     chain = new_template | self._llm | self._output_parser
+        #     out = chain.invoke({ 'topic_title': topic_title, 'topic_description': topic_description, 'doc_title': doc_title, 'doc_content': doc_content})        
+        #     print(f'Snippet Decision Loop: {out}')
+        #     rel = out.click
 
-        return rel
+        return out.click
     
 
 
@@ -169,5 +173,29 @@ class LLMSnippetTextClassifier(BaseTextClassifier):
 
 
 
+
+def StructuralRetry(prompt,params, partial_chain):
+    valid = False
+    chain = prompt | partial_chain
+    out = chain.invoke(params)
+    print(f'Snippet Decision: {out} ')
+    fields = out.__fields__
+    while not valid:
+        valid = True
+        for attr in fields:
+
+            if not hasattr(out,attr) or fields[attr].annotation != type(getattr(out,attr)):
+                new_prompt = """YYou did not format your response correctly to the following: \n ```{0}``` You responded with {1}. Please try again and respond with the correct format.""".format(prompt.template,out)
+                new_template = PromptTemplate(
+                    template=new_prompt,
+                    input_variables=prompt.input_variables,
+                    partial_variables=prompt.partial_variables,
+                )
+                chain = new_template | partial_chain
+                out = chain.invoke(params)  
+                print(f'Snippet Decision Loop: {out}')
+                valid = False
+                break   
+    return out
 
 
